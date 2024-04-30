@@ -1,14 +1,22 @@
-/* Requires the Docker Pipeline plugin */
 pipeline {
-agent { label "built-in" }
-  triggers {
-  pollSCM('H/2 * * * *')    
-                       }
-        stages {
-stage('build') {
-            steps {
-         sh 'docker --version'
-                   }
-            }
-               }
+    agent any
+    triggers{
+        pollSCM('H/2 * * * *')
     }
+    stages {
+    stage('Build Application') {
+        steps {
+            sh 'mvn clean install'
+            }
+        }
+    stage('Deploy CloudHub') {
+        environment {
+            ANYPOINT_CREDENTIALS = credentials('tonytawkanypointtrainingcredentials')
+        }
+    steps {
+        sh "mvn deploy -DmuleDeploy -Dcloud.env=Sandbox -DcloudhubAppName=accounts-raml-helloworld 
+        -Dmule.version=4.6.1 -Dcloud.user=${ANYPOINT_CREDENTIALS_USR} -Dcloud.password=${ANYPOINT_CREDENTIALS_PSW}"
+        }
+    }
+    }
+}
